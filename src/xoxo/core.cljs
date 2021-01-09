@@ -4,12 +4,7 @@
 
 (enable-console-print!)
 
-(println "This text is printed from src/xoxo/core.cljs. Go ahead and edit it and see reloading in action.")
-
-;; define your app data so that it doesn't get over-written on reload
-
-(defonce app-state (atom {:count          1
-                          :current-player "X"}))
+(defonce app-state (atom {:current-player "X"}))
 
 (defn inc-handler [_]
   (swap! app-state update :count inc))
@@ -29,12 +24,11 @@
         cross-1 [[[0 0] [1 1] [2 2]]]
         cross-2 [[[0 2] [1 1] [2 0]]]]
     (doseq [streak (concat rows columns cross-1 cross-2)]
-      (js/console.log (str "testing streak" streak))
       (let [occupiers (frequencies (map #(apply taken-by %) streak))]
-        (println occupiers)
         (when (contains? #{{"X" 3} {"Y" 3}} occupiers)
-          (swap! app-state assoc :winning-streak (set streak))
-          (swap! app-state assoc :winner (-> occupiers keys first)))))))
+          (swap! app-state assoc
+                 :winning-streak (set streak)
+                 :winner (-> occupiers keys first)))))))
 
 (defn place [x y]
   (fn []
@@ -52,16 +46,15 @@
 (defn cell [x y]
   [:td {:class         (str "board-cell"
                             (when (contains? (:winning-streak @app-state) [x y])
-                                             (js/console.log (str "winner cell" x y))
-                                           " winner-cell"))
+                              " winner-cell"))
         :border        "10px"
         :key           (str "cell " x y)
         :on-click      (when-not (or (taken-by x y)
                                      (winner? @app-state))
                          (place x y))
-        :on-mouse-out #(swap! app-state assoc :hovered-cell [])
+        :on-mouse-out  #(swap! app-state assoc :hovered-cell [])
         :on-mouse-over #(when-not (or (taken-by x y)
-                                     (winner? @app-state))
+                                      (winner? @app-state))
                           (swap! app-state assoc :hovered-cell [x y]))}
    (let [alt-piece (when (= [x y] (:hovered-cell @app-state))
                      (:current-player @app-state))]
