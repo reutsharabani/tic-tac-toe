@@ -4,7 +4,10 @@
 
 (enable-console-print!)
 
-(defonce app-state (atom {:current-player "X"}))
+(def X-sym "X")
+(def O-sym "Y")
+
+(defonce app-state (atom {:current-player X-sym}))
 
 (defn inc-handler [_]
   (swap! app-state update :count inc))
@@ -25,7 +28,7 @@
         cross-2 [[[0 2] [1 1] [2 0]]]]
     (doseq [streak (concat rows columns cross-1 cross-2)]
       (let [occupiers (frequencies (map #(apply taken-by %) streak))]
-        (when (contains? #{{"X" 3} {"Y" 3}} occupiers)
+        (when (contains? #{{X-sym 3} {O-sym 3}} occupiers)
           (swap! app-state assoc
                  :winning-streak (set streak)
                  :winner (-> occupiers keys first)))))))
@@ -35,9 +38,9 @@
     (swap! app-state assoc-in [:board x y] (:current-player @app-state))
     (check-victory)
     (swap! app-state update :current-player (fn [cp]
-                                              (if (= cp "X")
-                                                "Y"
-                                                "X")))
+                                              (if (= cp X-sym)
+                                                O-sym
+                                                X-sym)))
     ))
 
 (defn winner? [s]
@@ -64,7 +67,7 @@
   [:tr {:class "board-row"
         :key   (str "row-" x)}
    (doall (for [y (range 3)]
-            (cell x y)))])
+            [cell x y]))])
 
 (defn winner []
   [:tr [:td
@@ -75,18 +78,18 @@
   [:table
    [:tbody
     [:tr
-     [:th {:on-click #(reset! app-state {:current-player "X"})
+     [:th {:on-click #(reset! app-state {:current-player X-sym}) 
            :class    "reset-button"
            :colSpan  "3"} "reset"]]
     (doall
       (for [x (range 3)]
-        (row x)))
+        [row x]))
     (if (winner? @app-state)
-      (winner))]])
+      [winner])]])
 
 (defn xoxo []
   [:div
-   (board)])
+   [board]])
 
 (rd/render [xoxo]
            (. js/document (getElementById "app")))
